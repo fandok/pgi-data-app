@@ -1,0 +1,23 @@
+.title {
+  color: white !important;
+  padding-block-start: 5px;
+}
+
+.header {
+  background-color: #333533 !important;
+  display: flex;
+  justify-content: space-between;
+}
+
+.header button {
+  margin-block-start: 15px;
+}
+
+.content {
+  padding-inline: 50px;
+  margin-block-end: 30px;
+}
+
+.footer {
+  background-color: #068d9d !important;
+}

@@ -1,0 +1,38 @@
+.item,
+.item:hover,
+.item:active,
+.item:focus,
+.item:visited {
+  color: inherit !important;
+  text-decoration: none !important;
+}
+
+.item:hover {
+  background-color: cornsilk;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+}
+
+.itemRight {
+  text-align: right;
+}
+
+.itemLocation {
+  margin-block-end: 16px;
+}
+
+.header {
+  padding-block-start: 10px;
+}
+
+.items {
+  box-shadow: 1px 3px 5px 7px rgba(192, 192, 192, 0.75);
+  padding: 10px;
+}
+
+.submitButton {
+  margin-block-start: -24px;
+}

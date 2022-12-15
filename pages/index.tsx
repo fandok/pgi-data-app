@@ -1,101 +1,136 @@
 import {
   Button,
-  DatePicker,
+  Checkbox,
+  Col,
+  Divider,
   Form,
-  InputNumber,
-  Select,
-  Slider,
-  Switch,
-} from 'antd'
-import type { DatePickerProps } from 'antd'
-import { SmileFilled } from '@ant-design/icons'
-import Link from 'next/link'
+  Input,
+  Row,
+  Skeleton,
+  Typography,
+} from "antd";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import queryString from "query-string";
+import useSWRInfinite from "swr/infinite";
 
-const FormItem = Form.Item
+import styles from "../styles/home.module.css";
 
-const content = {
-  marginTop: '100px',
-}
+import { EnvironmentOutlined, GlobalOutlined } from "@ant-design/icons";
+import { Fragment } from "react";
+import MainLayout from "../components/Layout";
+import { LIST_API } from "../constants/api";
+import cleanObject from "../helpers/cleanObject";
+import fetcher from "../helpers/fetcher";
+import { FilterFormInterface, ListResponse } from "../types";
+
+dayjs.extend(relativeTime);
 
 export default function Home() {
-  const onDatePickerChange: DatePickerProps['onChange'] = (
-    date,
-    dateString
-  ) => {
-    console.log(date, dateString)
-  }
+  const router = useRouter();
+  const [form] = Form.useForm<FilterFormInterface>();
+
+  const getKey = (pageIndex: number, previousPageData: ListResponse[]) => {
+    if (previousPageData && !previousPageData.length) return null; // reached the end
+    return `${LIST_API}?page=${pageIndex + 1}&${queryString.stringify(
+      router.query
+    )}`; // SWR key
+  };
+
+  const handleFinish = (values: FilterFormInterface) => {
+    const newValues = cleanObject(values);
+
+    if (newValues.full_time && newValues.full_time.length) {
+      newValues.full_time = newValues.full_time[0];
+    } else {
+      delete newValues.full_time;
+    }
+
+    router.push({ query: newValues });
+  };
+
+  const { data, size, setSize, error, isLoading, isValidating } =
+    useSWRInfinite<ListResponse[]>(getKey, fetcher);
 
   return (
-    <div style={content}>
-      <div className="text-center mb-5">
-        <Link href="#" className="logo mr-0">
-          <SmileFilled style={{ fontSize: 48 }} />
-        </Link>
+    <MainLayout>
+      <Form onFinish={handleFinish} form={form} layout="vertical">
+        <Row className={styles.header} gutter={[4, 4]}>
+          <Col span={6}>
+            <Form.Item name="description" label={<b>Job Description</b>}>
+              <Input
+                prefix={<GlobalOutlined />}
+                placeholder="Job title, Benefits, etc.."
+              />
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Form.Item name="location" label={<b>Location</b>}>
+              <Input
+                prefix={<EnvironmentOutlined />}
+                placeholder="Remote, Europe, etc.."
+              />
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Form.Item name="full_time">
+              <Checkbox.Group>
+                <Checkbox value={true}>Full Time Only</Checkbox>
+              </Checkbox.Group>
+            </Form.Item>
+            <Form.Item className={styles.submitButton}>
+              <Button htmlType="submit">Search</Button>
+            </Form.Item>
+          </Col>
+          {/* <Col span={6}>
+            
+          </Col> */}
+        </Row>
+      </Form>
+      <div className={styles.items}>
+        {data?.map((batch) =>
+          batch.map((item) => {
+            if (!item) {
+              return;
+            }
 
-        <p className="mb-0 mt-3 text-disabled">Welcome to the world !</p>
+            return (
+              <Fragment key={item.id}>
+                <Link className={styles.item} href={`/detail/${item.id}`}>
+                  <div>
+                    <Typography.Title level={5}>{item.title}</Typography.Title>
+                    <div>
+                      <span>{item.company}</span> - <b>{item.type}</b>
+                    </div>
+                  </div>
+                  <div className={styles.itemRight}>
+                    <div className={styles.itemLocation}>{item.location}</div>
+                    <div>{dayjs(item.created_at).fromNow()}</div>
+                  </div>
+                </Link>
+                <Divider />
+              </Fragment>
+            );
+          })
+        )}
+        {!error && (
+          <Row justify="center">
+            <Col>
+              <Button
+                type="primary"
+                onClick={() => {
+                  setSize(size + 1);
+                }}
+              >
+                Load More
+              </Button>
+            </Col>
+          </Row>
+        )}
+        {(isLoading || isValidating) && <Skeleton />}
       </div>
-      <div>
-        <Form
-          layout="horizontal"
-          size={'large'}
-          labelCol={{ span: 8 }}
-          wrapperCol={{ span: 8 }}
-        >
-          <FormItem label="Input Number">
-            <InputNumber
-              min={1}
-              max={10}
-              style={{ width: 100 }}
-              defaultValue={3}
-              name="inputNumber"
-            />
-          </FormItem>
-
-          <FormItem label="Switch">
-            <Switch defaultChecked />
-          </FormItem>
-
-          <FormItem label="Slider">
-            <Slider defaultValue={70} />
-          </FormItem>
-
-          <FormItem label="Select">
-            <Select
-              defaultValue="lucy"
-              style={{ width: 192 }}
-              options={[
-                {
-                  value: 'jack',
-                  label: 'Jack',
-                },
-                {
-                  value: 'lucy',
-                  label: 'Lucy',
-                },
-                {
-                  value: 'disabled',
-                  disabled: true,
-                  label: 'Disabled',
-                },
-                {
-                  value: 'Yiminghe',
-                  label: 'yiminghe',
-                },
-              ]}
-            />
-          </FormItem>
-
-          <FormItem label="DatePicker">
-            <DatePicker showTime onChange={onDatePickerChange} />
-          </FormItem>
-          <FormItem style={{ marginTop: 48 }} wrapperCol={{ offset: 8 }}>
-            <Button type="primary" htmlType="submit">
-              OK
-            </Button>
-            <Button style={{ marginLeft: 8 }}>Cancel</Button>
-          </FormItem>
-        </Form>
-      </div>
-    </div>
-  )
+    </MainLayout>
+  );
 }
